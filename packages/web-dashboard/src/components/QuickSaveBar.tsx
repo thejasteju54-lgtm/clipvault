@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ClipboardPaste, Plus, Check, Zap, ZapOff, Sparkles } from 'lucide-react';
+import { ClipboardPaste, Plus, Check, Zap, ZapOff, Sparkles, Images } from 'lucide-react';
 import { syncClipboardElements, SyncResult } from '../services/clipboardSync';
 
 interface QuickSaveBarProps {
@@ -7,13 +7,15 @@ interface QuickSaveBarProps {
   onSyncComplete: (result: SyncResult) => void;
   autoSync: boolean;
   onToggleAutoSync: () => void;
+  onOpenBatchModal: () => void;
 }
 
 export const QuickSaveBar: React.FC<QuickSaveBarProps> = ({
   onSave,
   onSyncComplete,
   autoSync,
-  onToggleAutoSync
+  onToggleAutoSync,
+  onOpenBatchModal
 }) => {
   const [text, setText] = useState('');
   const [feedback, setFeedback] = useState<string | null>(null);
@@ -170,6 +172,30 @@ export const QuickSaveBar: React.FC<QuickSaveBarProps> = ({
             >
               <Sparkles size={16} />
               <span>{isSyncing ? 'Syncing...' : '1-Click Sync'}</span>
+            </button>
+
+            {/* Bulk Sync (30-40 Clips / Screenshots) */}
+            <button
+              type="button"
+              onClick={onOpenBatchModal}
+              style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '12px 18px',
+                backgroundColor: 'var(--bg-surface-elevated)',
+                color: 'var(--text-main)',
+                border: '1px solid var(--border-subtle)',
+                borderRadius: 'var(--radius-md)',
+                fontWeight: 600,
+                fontSize: '14px',
+                transition: 'var(--transition-fast)',
+                whiteSpace: 'nowrap'
+              }}
+              title="Sync all 30-40 screenshots, links, and text clips from your phone"
+            >
+              <Images size={16} color="var(--color-primary)" />
+              <span>Bulk Sync (30+ Clips)</span>
             </button>
           </div>
         </div>

@@ -276,7 +276,7 @@ export async function handleNativePasteEvent(
     }
   }
 
-  if (ingested.length > 0) {
+    if (ingested.length > 0) {
     try {
       navigator.vibrate?.(35);
     } catch {
@@ -291,4 +291,104 @@ export async function handleNativePasteEvent(
       summary: firstItem.contentType === 'image' ? 'Screenshot saved to vault!' : `Pasted: "${firstItem.plainText.slice(0, 32)}..."`
     });
   }
+}
+
+/**
+ * Ingests multiple files (e.g. multiple screenshots from phone gallery or drag-and-drop).
+ */
+export async function ingestFiles(files: FileList | File[]): Promise<SyncResult> {
+  const itemsIngested: ClipboardItem[] = [];
+  let added = 0;
+  let refreshed = 0;
+
+  for (let i = 0; i < files.length; i++) {
+    const file = files[i];
+    if (file.type.startsWith('image/')) {
+      try {
+        const dataUrl = await blobToDataUrl(file);
+        const sizeKb = (file.size / 1024).toFixed(1);
+        const timeString = new Date().toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' });
+
+        const input: CreateClipboardItemInput = {
+          plainText: file.name ? file.name.replace(/\.[^/.]+$/, '') : `Screenshot (${sizeKb} KB) - ${timeString}`,
+          contentType: 'image',
+          originalMimeTypes: [file.type],
+          attachmentUrl: dataUrl,
+          sourceApp: 'Gallery / Screenshot Import'
+        };
+
+        const res = ingestInput(input);
+        if (res.isDuplicate) refreshed++; else added++;
+        itemsIngested.push(res.item);
+      } catch {
+        // Continue
+      }
+    } else if (file.type.startsWith('text/') || file.name.endsWith('.txt') || file.name.endsWith('.json') || file.name.endsWith('.md')) {
+      try {
+        const text = await file.text();
+        const trimmed = (text || '').trim();
+        if (trimmed) {
+          const input: CreateClipboardItemInput = {
+            plainText: trimmed,
+            sourceApp: file.name
+          };
+          const res = ingestInput(input);
+          if (res.isDuplicate) refreshed++; else added++;
+          itemsIngested.push(res.item);
+        }
+      } catch {
+        // Continue
+      }
+    }
+  }
+
+  if (itemsIngested.length > 0) {
+    try {
+      navigator.vibrate?.(45);
+    } catch {}
+  }
+
+  return {
+    success: itemsIngested.length > 0,
+    addedCount: added,
+    refreshedCount: refreshed,
+    items: itemsIngested,
+    summary: itemsIngested.length > 0
+      ? `Batch imported ${itemsIngested.length} items (${added} new, ${refreshed} updated)`
+      : 'No supported images or text found in selected files'
+  };
+}
+
+/**
+ * Parses and ingests a block of text containing multiple items (URLs, code snippets, notes) separated by lines or delimiters.
+ */
+export function ingestBatchText(rawText: string): SyncResult {
+  const lines = rawText.split(/\r?\n+/).map((l) => l.trim()).filter((l) => l.length > 0);
+  const itemsIngested: ClipboardItem[] = [];
+  let added = 0;
+  let refreshed = 0;
+
+  for (const line of lines) {
+    const input: CreateClipboardItemInput = {
+      plainText: line,
+      sourceApp: 'Batch Paste'
+    };
+    const res = ingestInput(input);
+    if (res.isDuplicate) refreshed++; else added++;
+    itemsIngested.push(res.item);
+  }
+
+  if (itemsIngested.length > 0) {
+    try {
+      navigator.vibrate?.(40);
+    } catch {}
+  }
+
+  return {
+    success: itemsIngested.length > 0,
+    addedCount: added,
+    refreshedCount: refreshed,
+    items: itemsIngested,
+    summary: `Ingested ${itemsIngested.length} items (${added} new, ${refreshed} updated)`
+  };
 }

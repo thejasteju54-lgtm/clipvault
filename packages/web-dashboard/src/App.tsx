@@ -8,6 +8,7 @@ import { FilterBar } from './components/FilterBar';
 import { ItemCard } from './components/ItemCard';
 import { DeviceModal } from './components/DeviceModal';
 import { ExportModal } from './components/ExportModal';
+import { BatchIngestModal } from './components/BatchIngestModal';
 import { ClipboardCheck, Sparkles, DownloadCloud, Check, Zap, ShieldAlert, Lock } from 'lucide-react';
 import './styles/tokens.css';
 
@@ -19,6 +20,7 @@ export const App: React.FC = () => {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [isBatchModalOpen, setIsBatchModalOpen] = useState(false);
   const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
   const [pasteToast, setPasteToast] = useState<{ message: string; isAuto?: boolean } | null>(null);
   const [autoSync, setAutoSync] = useState<boolean>(() => vaultStorage.isAutoSyncEnabled());
@@ -314,6 +316,7 @@ export const App: React.FC = () => {
         }}
         autoSync={autoSync}
         onToggleAutoSync={handleToggleAutoSync}
+        onOpenBatchModal={() => setIsBatchModalOpen(true)}
       />
 
       <FilterBar
@@ -458,6 +461,16 @@ export const App: React.FC = () => {
       <ExportModal
         isOpen={isExportModalOpen}
         onClose={() => setIsExportModalOpen(false)}
+      />
+
+      <BatchIngestModal
+        isOpen={isBatchModalOpen}
+        onClose={() => setIsBatchModalOpen(false)}
+        onSyncComplete={(result) => {
+          refreshVault();
+          setPasteToast({ message: result.summary, isAuto: false });
+          setTimeout(() => setPasteToast(null), 3000);
+        }}
       />
     </div>
   );
