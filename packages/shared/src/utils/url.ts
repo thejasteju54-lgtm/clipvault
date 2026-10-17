@@ -21,16 +21,29 @@ const TRACKING_PARAMS = new Set([
  */
 export function extractAndSanitizeUrl(text: string): string | null {
   const trimmed = text.trim();
-  // Check if text is predominantly a URL
-  const urlRegex = /https?:\/\/[^\s<>"{}|\\^`[\]]+/i;
-  const match = trimmed.match(urlRegex);
+  
+  // Check for https://, http://, www., or common domains
+  let rawUrl: string | null = null;
+  const httpMatch = trimmed.match(/https?:\/\/[^\s<>"{}|\\^`[\]]+/i);
+  if (httpMatch) {
+    rawUrl = httpMatch[0];
+  } else {
+    const wwwMatch = trimmed.match(/(?:^|\s)(www\.[^\s<>"{}|\\^`[\]]+)/i);
+    if (wwwMatch) {
+      rawUrl = `https://${wwwMatch[1]}`;
+    } else {
+      const domainMatch = trimmed.match(/(?:^|\s)([a-zA-Z0-9-]+\.(?:com|org|net|io|dev|app|edu|gov|co|in|ai|me)(?:\/[^\s<>"{}|\\^`[\]]*)?)/i);
+      if (domainMatch) {
+        rawUrl = `https://${domainMatch[1]}`;
+      }
+    }
+  }
 
-  if (!match) {
+  if (!rawUrl) {
     return null;
   }
 
   try {
-    const rawUrl = match[0];
     const parsed = new URL(rawUrl);
 
     // Filter tracking queries

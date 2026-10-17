@@ -9,7 +9,8 @@ import { ItemCard } from './components/ItemCard';
 import { DeviceModal } from './components/DeviceModal';
 import { ExportModal } from './components/ExportModal';
 import { BatchIngestModal } from './components/BatchIngestModal';
-import { ClipboardCheck, Sparkles, DownloadCloud, Check, Zap, ShieldAlert, Lock } from 'lucide-react';
+import { SegmentedVault } from './components/SegmentedVault';
+import { ClipboardCheck, Sparkles, DownloadCloud, Check, Zap, ShieldAlert, Lock, LayoutGrid, List } from 'lucide-react';
 import './styles/tokens.css';
 
 export const App: React.FC = () => {
@@ -17,6 +18,7 @@ export const App: React.FC = () => {
   const [devices, setDevices] = useState<RegisteredDevice[]>([]);
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedFilter, setSelectedFilter] = useState('All');
+  const [viewMode, setViewMode] = useState<'segmented' | 'feed'>('segmented');
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
@@ -115,6 +117,12 @@ export const App: React.FC = () => {
     document.addEventListener('visibilitychange', onVisibilityChange);
     window.addEventListener('pageshow', onPageShow);
 
+    // On mobile, the first touch or tap on the page provides approved user-gesture context
+    const onPointerDown = () => {
+      triggerAutoSync();
+    };
+    window.addEventListener('pointerdown', onPointerDown, { passive: true });
+
     // Background interval check while tab is actively focused
     const intervalId = setInterval(() => {
       if (document.hasFocus()) {
@@ -126,6 +134,7 @@ export const App: React.FC = () => {
       window.removeEventListener('focus', onFocus);
       document.removeEventListener('visibilitychange', onVisibilityChange);
       window.removeEventListener('pageshow', onPageShow);
+      window.removeEventListener('pointerdown', onPointerDown);
       clearInterval(intervalId);
     };
   }, [autoSync, triggerAutoSync]);
@@ -326,6 +335,68 @@ export const App: React.FC = () => {
         onFilterChange={setSelectedFilter}
       />
 
+      {/* View Mode & Segment Switcher Bar */}
+      <div style={{
+        maxWidth: '840px',
+        width: '100%',
+        margin: '0 auto',
+        padding: '0 24px 12px 24px',
+        display: 'flex',
+        alignItems: 'center',
+        justifyContent: 'space-between',
+        flexWrap: 'wrap',
+        gap: '8px'
+      }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>View:</span>
+          <button
+            type="button"
+            onClick={() => setViewMode('segmented')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '12px',
+              fontWeight: viewMode === 'segmented' ? 700 : 500,
+              backgroundColor: viewMode === 'segmented' ? 'var(--color-primary-light)' : 'var(--bg-surface)',
+              color: viewMode === 'segmented' ? 'var(--color-primary)' : 'var(--text-muted)',
+              border: `1px solid ${viewMode === 'segmented' ? 'var(--color-primary-border)' : 'var(--border-subtle)'}`,
+              transition: 'var(--transition-fast)'
+            }}
+          >
+            <LayoutGrid size={14} />
+            <span>Segmented Board (Auto-Categorized)</span>
+          </button>
+
+          <button
+            type="button"
+            onClick={() => setViewMode('feed')}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 12px',
+              borderRadius: 'var(--radius-sm)',
+              fontSize: '12px',
+              fontWeight: viewMode === 'feed' ? 700 : 500,
+              backgroundColor: viewMode === 'feed' ? 'var(--color-primary-light)' : 'var(--bg-surface)',
+              color: viewMode === 'feed' ? 'var(--color-primary)' : 'var(--text-muted)',
+              border: `1px solid ${viewMode === 'feed' ? 'var(--color-primary-border)' : 'var(--border-subtle)'}`,
+              transition: 'var(--transition-fast)'
+            }}
+          >
+            <List size={14} />
+            <span>Unified Feed</span>
+          </button>
+        </div>
+
+        <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>
+          {items.length} clips organized
+        </div>
+      </div>
+
       <main style={{
         flex: 1,
         maxWidth: '840px',
@@ -361,7 +432,7 @@ export const App: React.FC = () => {
             <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '420px', margin: '0 auto 16px auto' }}>
               {searchQuery
                 ? 'Try adjusting your search terms or clearing the active filter.'
-                : 'Copy any text, link, or screenshot in any app on your phone, then return here. ClipVault auto-syncs it into your permanent vault!'}
+                : 'Copy any text, link, or screenshot in any app on your phone, then return here. ClipVault auto-syncs it into its own segment!'}
             </p>
             <button
               onClick={handleManualSync}
@@ -382,6 +453,15 @@ export const App: React.FC = () => {
               <span>{isSyncing ? 'Syncing...' : 'Sync Clipboard Now'}</span>
             </button>
           </div>
+        ) : viewMode === 'segmented' && selectedFilter === 'All' && !searchQuery ? (
+          <SegmentedVault
+            items={filteredItems}
+            onTogglePin={handleTogglePin}
+            onToggleFavorite={handleToggleFavorite}
+            onDelete={handleDelete}
+            onManualSync={handleManualSync}
+            isSyncing={isSyncing}
+          />
         ) : (
           <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
             {filteredItems.map((item) => (

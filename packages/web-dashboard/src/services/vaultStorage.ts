@@ -62,19 +62,16 @@ export const vaultStorage = {
 
     const detectedUrl = input.detectedUrl || (input.plainText ? extractAndSanitizeUrl(input.plainText) : null);
     let contentType = input.contentType || 'text';
-    if (contentType === 'text' && input.plainText) {
-      let isPureUrl = false;
-      try {
-        const u = new URL(input.plainText.trim());
-        isPureUrl = u.protocol === 'http:' || u.protocol === 'https:';
-      } catch {
-        isPureUrl = false;
-      }
-      if (isPureUrl) {
-        contentType = 'url';
-      } else if (detectCodeSnippet(input.plainText)) {
-        contentType = 'code';
-      }
+    
+    // Automatic classification into segments
+    if (input.attachmentUrl || (input.plainText && input.plainText.startsWith('data:image/'))) {
+      contentType = 'image';
+    } else if (detectedUrl) {
+      contentType = 'url';
+    } else if (input.plainText && detectCodeSnippet(input.plainText)) {
+      contentType = 'code';
+    } else if (!input.contentType) {
+      contentType = 'text';
     }
 
     // Include attachment url length and slice in content hash if image
