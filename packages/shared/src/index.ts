@@ -4,3 +4,7 @@ export * from './utils/hasher.js';
 export * from './utils/url.js';
 export * from './utils/pii.js';
 export * from './config/env.validator.js';
+export * from './sync/conflict.js';
+export * from './sync/backoff.js';
+export * from './sync/cloudAdapter.js';
+export * from './sync/supabaseClient.js';

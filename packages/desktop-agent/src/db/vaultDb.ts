@@ -7,10 +7,12 @@ import {
   CreateClipboardItemInput, 
   ClipboardFilterOptions, 
   SyncOutboxEvent,
+  SyncState,
   computeContentHash,
   extractAndSanitizeUrl,
   detectCodeSnippet,
-  formatSafeLog
+  formatSafeLog,
+  mergeClipboardItems
 } from '@clipvault/shared';
 
 export class VaultDatabase {
@@ -220,6 +222,88 @@ export class VaultDatabase {
     return { item, isDuplicate: false };
   }
 
+  /**
+   * Directly upserts a remote item received from peer devices via Cloud Sync.
+   * Merges conflicts using mergeClipboardItems without enqueueing an outbox event (prevents echo loops).
+   */
+  public upsertRemoteItem(remote: ClipboardItem): { item: ClipboardItem; isUpdated: boolean } {
+    // Check if item exists by contentHash or id
+    const existingByHashStmt = this.db.prepare('SELECT * FROM clipboard_items WHERE content_hash = ?');
+    const existingRow = existingByHashStmt.get(remote.contentHash) as any;
+
+    if (existingRow) {
+      const localItem = this.mapRowToItem(existingRow);
+      const merged = mergeClipboardItems(localItem, remote);
+
+      const updateStmt = this.db.prepare(`
+        UPDATE clipboard_items 
+        SET is_pinned = ?, is_favorite = ?, tags = ?, captured_at = ?, updated_at = ?, sync_status = 'synced'
+        WHERE id = ?
+      `);
+
+      updateStmt.run(
+        merged.isPinned ? 1 : 0,
+        merged.isFavorite ? 1 : 0,
+        JSON.stringify(merged.tags),
+        merged.capturedAt,
+        merged.updatedAt,
+        localItem.id
+      );
+
+      return { item: merged, isUpdated: true };
+    }
+
+    // Insert new remote item
+    const insertStmt = this.db.prepare(`
+      INSERT INTO clipboard_items (
+        id, user_id, device_id, device_name, device_sequence,
+        content_type, original_mime_types, plain_text, detected_url,
+        html_content, content_hash, content_size_bytes, attachment_path,
+        attachment_url, source_app, is_pinned, is_favorite, tags,
+        captured_at, created_at, updated_at, sync_status, retention_policy
+      ) VALUES (
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?, ?,
+        ?, ?, ?, ?, ?,
+        ?, ?, ?, ?, ?
+      )
+    `);
+
+    insertStmt.run(
+      remote.id,
+      remote.userId,
+      remote.deviceId,
+      remote.deviceName,
+      remote.deviceSequence,
+      remote.contentType,
+      JSON.stringify(remote.originalMimeTypes),
+      remote.plainText,
+      remote.detectedUrl || null,
+      remote.htmlContent || null,
+      remote.contentHash,
+      remote.contentSizeBytes,
+      remote.attachmentPath || null,
+      remote.attachmentUrl || null,
+      remote.sourceApp || null,
+      remote.isPinned ? 1 : 0,
+      remote.isFavorite ? 1 : 0,
+      JSON.stringify(remote.tags),
+      remote.capturedAt,
+      remote.createdAt,
+      remote.updatedAt,
+      'synced',
+      remote.retentionPolicy
+    );
+
+    return { item: { ...remote, syncStatus: 'synced' }, isUpdated: false };
+  }
+
+  public updateItemSyncStatus(id: string, syncStatus: SyncState): void {
+    const stmt = this.db.prepare('UPDATE clipboard_items SET sync_status = ? WHERE id = ?');
+    stmt.run(syncStatus, id);
+  }
+
   public getItem(id: string): ClipboardItem | null {
     const stmt = this.db.prepare('SELECT * FROM clipboard_items WHERE id = ?');
     const row = stmt.get(id) as any;
@@ -265,7 +349,7 @@ export class VaultDatabase {
     const selectStmt = this.db.prepare(`
       SELECT * FROM clipboard_items 
       WHERE ${whereStr} 
-      ORDER BY captured_at DESC 
+      ORDER BY captured_at DESC, device_sequence DESC 
       LIMIT ? OFFSET ?
     `);
 

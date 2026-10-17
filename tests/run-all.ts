@@ -12,7 +12,9 @@ async function runAllTests() {
   const files = [
     path.join(__dirname, 'unit', 'domain-models.test.ts'),
     path.join(__dirname, 'unit', 'security-pii.test.ts'),
-    path.join(__dirname, 'integration', 'vault-db.test.ts')
+    path.join(__dirname, 'integration', 'vault-db.test.ts'),
+    path.join(__dirname, 'integration', 'sync-engine.test.ts'),
+    path.join(__dirname, 'integration', 'stress-failure.test.ts')
   ];
 
   const stream = run({

@@ -26,7 +26,9 @@ export class WindowsClipboardListener {
       fs.mkdirSync(this.attachmentsDir, { recursive: true });
     }
 
-    this.scriptPath = path.join(__dirname, 'clipboard-listener.ps1');
+    const directPath = path.join(__dirname, 'clipboard-listener.ps1');
+    const srcFallback = path.join(__dirname, '..', '..', 'src', 'capture', 'clipboard-listener.ps1');
+    this.scriptPath = fs.existsSync(directPath) ? directPath : srcFallback;
   }
 
   public start(): void {
