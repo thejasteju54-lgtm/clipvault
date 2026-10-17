@@ -102,3 +102,13 @@ input, textarea {
 ::-webkit-scrollbar-thumb:hover {
   background: var(--text-dim);
 }
+
+/* Responsive helper classes */
+@media (max-width: 640px) {
+  .hide-on-mobile {
+    display: none !important;
+  }
+  .full-width-on-mobile {
+    width: 100% !important;
+  }
+}

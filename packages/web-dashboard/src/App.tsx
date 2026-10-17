@@ -7,7 +7,7 @@ import { FilterBar } from './components/FilterBar';
 import { ItemCard } from './components/ItemCard';
 import { DeviceModal } from './components/DeviceModal';
 import { ExportModal } from './components/ExportModal';
-import { ClipboardCheck } from 'lucide-react';
+import { ClipboardCheck, ClipboardPaste, DownloadCloud, Check } from 'lucide-react';
 import './styles/tokens.css';
 
 export const App: React.FC = () => {
@@ -18,6 +18,8 @@ export const App: React.FC = () => {
   const [theme, setTheme] = useState<'dark' | 'light'>('dark');
   const [isDeviceModalOpen, setIsDeviceModalOpen] = useState(false);
   const [isExportModalOpen, setIsExportModalOpen] = useState(false);
+  const [deferredPrompt, setDeferredPrompt] = useState<any>(null);
+  const [pasteToast, setPasteToast] = useState<string | null>(null);
 
   useEffect(() => {
     // Initial data load
@@ -26,6 +28,14 @@ export const App: React.FC = () => {
 
     // Sync theme attribute to document
     document.documentElement.setAttribute('data-theme', theme);
+
+    // Listen for PWA install prompt
+    const installHandler = (e: Event) => {
+      e.preventDefault();
+      setDeferredPrompt(e);
+    };
+    window.addEventListener('beforeinstallprompt', installHandler);
+    return () => window.removeEventListener('beforeinstallprompt', installHandler);
   }, [theme]);
 
   const handleToggleTheme = () => {
@@ -56,6 +66,37 @@ export const App: React.FC = () => {
   const handleRevokeDevice = (deviceId: string) => {
     vaultStorage.revokeDevice(deviceId);
     setDevices(vaultStorage.getDevices());
+  };
+
+  const handleDirectPaste = async () => {
+    try {
+      if (navigator.clipboard && navigator.clipboard.readText) {
+        const text = await navigator.clipboard.readText();
+        if (text && text.trim()) {
+          const { isDuplicate } = handleSave(text);
+          try {
+            navigator.vibrate?.(40);
+          } catch {
+            // vibration not supported
+          }
+          setPasteToast(isDuplicate ? 'Duplicate refreshed!' : 'Copied from device clipboard & saved!');
+          setTimeout(() => setPasteToast(null), 3000);
+          return;
+        }
+      }
+      document.getElementById('quick-save-input')?.focus();
+    } catch {
+      document.getElementById('quick-save-input')?.focus();
+    }
+  };
+
+  const handleInstallClick = async () => {
+    if (!deferredPrompt) return;
+    deferredPrompt.prompt();
+    const { outcome } = await deferredPrompt.userChoice;
+    if (outcome === 'accepted') {
+      setDeferredPrompt(null);
+    }
   };
 
   // Filter items
@@ -91,7 +132,7 @@ export const App: React.FC = () => {
   const pinnedCount = items.filter((i) => i.isPinned).length;
 
   return (
-    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column' }}>
+    <div style={{ minHeight: '100vh', display: 'flex', flexDirection: 'column', position: 'relative' }}>
       <Header
         totalCount={items.length}
         pinnedCount={pinnedCount}
@@ -100,6 +141,40 @@ export const App: React.FC = () => {
         onOpenDevices={() => setIsDeviceModalOpen(true)}
         onOpenExport={() => setIsExportModalOpen(true)}
       />
+
+      {/* PWA Install Banner if browser supports installation */}
+      {deferredPrompt && (
+        <div style={{
+          backgroundColor: 'var(--color-primary-light)',
+          borderBottom: '1px solid var(--color-primary-border)',
+          padding: '10px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          fontSize: '13px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-primary)' }}>
+            <DownloadCloud size={16} />
+            <span style={{ fontWeight: 600 }}>Install ClipVault Web App</span>
+            <span style={{ color: 'var(--text-muted)' }} className="hide-on-mobile">
+              • Access your clipboard anytime from your home screen
+            </span>
+          </div>
+          <button
+            onClick={handleInstallClick}
+            style={{
+              padding: '5px 12px',
+              backgroundColor: 'var(--color-primary)',
+              color: '#FFF',
+              borderRadius: 'var(--radius-sm)',
+              fontWeight: 600,
+              fontSize: '12px'
+            }}
+          >
+            Install
+          </button>
+        </div>
+      )}
 
       <QuickSaveBar onSave={handleSave} />
 
@@ -115,7 +190,7 @@ export const App: React.FC = () => {
         maxWidth: '840px',
         width: '100%',
         margin: '0 auto',
-        padding: '0 24px 48px 24px'
+        padding: '0 24px 80px 24px'
       }}>
         {filteredItems.length === 0 ? (
           <div style={{
@@ -162,6 +237,58 @@ export const App: React.FC = () => {
           </div>
         )}
       </main>
+
+      {/* Floating 1-Tap Paste Button (Mobile & Desktop) */}
+      <button
+        onClick={handleDirectPaste}
+        style={{
+          position: 'fixed',
+          bottom: '24px',
+          right: '24px',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          padding: '14px 20px',
+          backgroundColor: 'var(--color-primary)',
+          color: '#FFF',
+          borderRadius: 'var(--radius-full)',
+          boxShadow: 'var(--shadow-lg)',
+          fontWeight: 600,
+          fontSize: '14px',
+          zIndex: 100,
+          transition: 'transform 0.15s ease',
+          border: '1px solid rgba(255, 255, 255, 0.15)'
+        }}
+        title="Tap to paste and save clipboard content"
+      >
+        <ClipboardPaste size={18} />
+        <span>Paste & Save</span>
+      </button>
+
+      {/* Feedback Toast */}
+      {pasteToast && (
+        <div style={{
+          position: 'fixed',
+          bottom: '84px',
+          right: '24px',
+          backgroundColor: 'var(--bg-surface-elevated)',
+          color: 'var(--text-main)',
+          padding: '10px 16px',
+          borderRadius: 'var(--radius-md)',
+          boxShadow: 'var(--shadow-md)',
+          border: '1px solid var(--border-subtle)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '8px',
+          fontSize: '13px',
+          fontWeight: 500,
+          zIndex: 101,
+          animation: 'fadeIn 0.2s ease'
+        }}>
+          <Check size={16} color="var(--color-primary)" />
+          <span>{pasteToast}</span>
+        </div>
+      )}
 
       <DeviceModal
         isOpen={isDeviceModalOpen}

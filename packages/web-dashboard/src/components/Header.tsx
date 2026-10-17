@@ -54,15 +54,15 @@ export const Header: React.FC<HeaderProps> = ({
               v1.0.0
             </span>
           </div>
-          <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
+          <p className="hide-on-mobile" style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
             Universal Clipboard Persistence & Cross-Device Sync
           </p>
         </div>
       </div>
 
-      <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
         {/* Storage Stats badge */}
-        <div style={{
+        <div className="hide-on-mobile" style={{
           display: 'flex',
           alignItems: 'center',
           gap: '6px',
