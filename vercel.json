@@ -1,7 +1,7 @@
 {
   "$schema": "https://openapi.vercel.sh/vercel.json",
-  "buildCommand": "npm run build --workspace=@clipvault/web-dashboard",
-  "outputDirectory": "packages/web-dashboard/dist",
+  "buildCommand": "node scripts/build-web.js",
+  "outputDirectory": "dist",
   "framework": "vite",
   "rewrites": [
     {

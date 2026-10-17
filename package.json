@@ -14,7 +14,8 @@
     "test": "node --import tsx tests/run-all.ts",
     "test:unit": "node --import tsx tests/unit/domain-models.test.ts",
     "typecheck": "tsc --noEmit -p tsconfig.json && tsc --noEmit -p packages/web-dashboard/tsconfig.json",
-    "build": "npm run build --workspaces --if-present"
+    "build": "node scripts/build-web.js",
+    "build:all": "npm run build --workspaces --if-present && node scripts/build-web.js"
   },
   "devDependencies": {
     "@types/node": "^22.13.5",
