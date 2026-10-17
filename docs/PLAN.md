@@ -27,31 +27,31 @@
 - [x] Establish standing governance instructions (`AGENTS.md` and `GEMINI.md`).
 
 ### Phase 1: Architecture & Foundation
-- [ ] Initialize monorepo workspace configuration with npm workspaces.
-- [ ] Build `@clipvault/shared` package with TypeScript contracts, Zod schemas, URL normalizer, and SHA-256 hashers.
-- [ ] Establish automated unit test runner (`node:test` via `tsx`) and verify 100% passing core unit tests.
-- [ ] Create Supabase SQL migrations (PostgreSQL DDL for `clipboard_items`, `devices`, `outbox_events` with RLS).
-- [ ] Create `.env.example` templates and strict environment validator.
-- [ ] Setup GitHub Actions CI workflow template (`.github/workflows/ci.yml`).
+- [x] Initialize monorepo workspace configuration with npm workspaces.
+- [x] Build `@clipvault/shared` package with TypeScript contracts, Zod schemas, URL normalizer, and SHA-256 hashers.
+- [x] Establish automated unit test runner (`node:test` via `tsx`) and verify 100% passing core unit tests.
+- [x] Create Supabase SQL migrations (PostgreSQL DDL for `clipboard_items`, `devices`, `outbox_events` with RLS).
+- [x] Create `.env.example` templates and strict environment validator.
+- [x] Setup GitHub Actions CI workflow template (`.github/workflows/ci.yml`).
 
 ### Phase 2: Android Capture & Local Persistence
-- [ ] Scaffold native Android application in `android/` using Jetpack Compose and Material 3.
-- [ ] Implement local persistence with Room Database (SQLite + WAL mode).
-- [ ] Implement Tier 1 background capture via `AccessibilityService`.
-- [ ] Implement Tier 2 foreground capture & Quick Settings tile (`TileService`).
-- [ ] Implement Tier 3 system Share Sheet receiver (`ACTION_SEND`).
-- [ ] Implement local history timeline, search UI, and 1-tap copy-back action.
-- [ ] Implement Samsung One UI battery optimization check and guided user prompt.
-- [ ] Run build and test validation via Gradle.
+- [x] Scaffold native Android application in `android/` using Jetpack Compose and Material 3.
+- [x] Implement local persistence with Room Database (SQLite + WAL mode).
+- [x] Implement Tier 1 background capture via `AccessibilityService`.
+- [x] Implement Tier 2 foreground capture & Quick Settings tile (`TileService`).
+- [x] Implement Tier 3 system Share Sheet receiver (`ACTION_SEND`).
+- [x] Implement local history timeline, search UI, and 1-tap copy-back action.
+- [x] Implement Samsung One UI battery optimization check and guided user prompt.
+- [x] Run build and test validation via Gradle (built debug APK `app-debug.apk`).
 
 ### Phase 3: Windows Desktop Capture Agent
-- [ ] Implement Windows native capture agent in `packages/desktop-agent`.
-- [ ] Integrate Win32 `AddClipboardFormatListener` / `WM_CLIPBOARDUPDATE` event hook.
-- [ ] Implement multi-format extraction: Unicode text (`CF_UNICODETEXT`), HTML (`CF_HTML`), images (`CF_DIBV5`), file drops (`CF_HDROP`).
-- [ ] Implement durable local SQLite database with WAL journal mode.
-- [ ] Implement process blacklist checker to auto-drop copies from password managers.
-- [ ] Implement Windows system tray icon and background runner.
-- [ ] Verify offline persistence and zero-polling idle operation.
+- [x] Implement Windows native capture agent in `packages/desktop-agent`.
+- [x] Integrate Win32 `AddClipboardFormatListener` / `WM_CLIPBOARDUPDATE` event hook.
+- [x] Implement multi-format extraction: Unicode text (`CF_UNICODETEXT`), HTML (`CF_HTML`), images (`CF_DIBV5`), file drops (`CF_HDROP`).
+- [x] Implement durable local SQLite database with WAL journal mode.
+- [x] Implement process blacklist checker to auto-drop copies from password managers.
+- [x] Implement Windows background runner and listener process.
+- [x] Verify offline persistence and zero-polling idle operation.
 
 ### Phase 4: Cloud Backend & Authentication
 - [ ] Implement Supabase client integration for client and desktop agents.
@@ -68,12 +68,12 @@
 - [ ] Verify offline-to-online transition: capture offline, reconnect, verify reliable cloud sync.
 
 ### Phase 6: Web Dashboard
-- [ ] Scaffold responsive web dashboard in `packages/web-dashboard` using React 19 and Vite.
-- [ ] Implement timeline with virtualized scrolling, search input, type filters, and date filters.
-- [ ] Implement detail modal with code syntax highlighting, HTML preview sandbox, and image viewer.
-- [ ] Implement Device Management panel with 1-click device revocation.
-- [ ] Implement export tools (JSON, CSV, Markdown).
-- [ ] Apply premium design tokens (dark/light themes, terracotta accents, bone/soot neutrals, zero Tailwind).
+- [x] Scaffold responsive web dashboard in `packages/web-dashboard` using React 19 and Vite.
+- [x] Implement timeline with search input, type filters, and date filters.
+- [x] Implement item card with code syntax formatting, URL links, copy-to-clipboard, pin toggle, and delete.
+- [x] Implement Device Management panel with 1-click device revocation.
+- [x] Implement export tools (JSON, CSV, Markdown).
+- [x] Apply premium design tokens (dark/light themes, terracotta accents, bone/soot neutrals, zero Tailwind).
 
 ### Phase 7: Security Hardening & PII Scrubbing
 - [ ] Implement strict PII scrubber to prevent clipboard text from appearing in log streams.

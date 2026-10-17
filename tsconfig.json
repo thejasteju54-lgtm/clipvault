@@ -3,7 +3,8 @@
     "target": "ES2022",
     "module": "NodeNext",
     "moduleResolution": "NodeNext",
-    "lib": ["ES2022"],
+    "lib": ["ES2022", "DOM", "DOM.Iterable"],
+    "jsx": "react-jsx",
     "strict": true,
     "esModuleInterop": true,
     "skipLibCheck": true,
@@ -14,10 +15,13 @@
     "sourceMap": true
   },
   "include": [
-    "packages/*/src/**/*",
+    "packages/shared/src/**/*",
+    "packages/desktop-agent/src/**/*",
     "tests/**/*"
   ],
   "exclude": [
+    "packages/web-dashboard",
+    "android",
     "node_modules",
     "dist"
   ]
