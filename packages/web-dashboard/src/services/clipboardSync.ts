@@ -47,6 +47,17 @@ export async function syncClipboardElements(options: { silent?: boolean } = {}):
   let refreshed = 0;
   const lastHash = vaultStorage.getLastSyncedHash();
 
+  const isSecure = typeof window !== 'undefined' ? window.isSecureContext : true;
+  if (!isSecure && typeof location !== 'undefined' && location.protocol === 'http:') {
+    return {
+      success: false,
+      addedCount: 0,
+      refreshedCount: 0,
+      items: [],
+      summary: 'Mobile browsers require HTTPS for Clipboard API. Tap "Switch to HTTPS" at top.'
+    };
+  }
+
   // Try modern multimodal Clipboard API first (images + text)
   if (typeof navigator !== 'undefined' && navigator.clipboard) {
     if (typeof navigator.clipboard.read === 'function') {
@@ -201,7 +212,9 @@ export async function syncClipboardElements(options: { silent?: boolean } = {}):
     addedCount: 0,
     refreshedCount: 0,
     items: [],
-    summary: 'Clipboard API not supported on this browser'
+    summary: !isSecure
+      ? 'Mobile browsers require HTTPS for Clipboard API. Tap "Switch to HTTPS" at top.'
+      : 'Clipboard API not supported on this browser'
   };
 }
 

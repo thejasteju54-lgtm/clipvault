@@ -8,7 +8,7 @@ import { FilterBar } from './components/FilterBar';
 import { ItemCard } from './components/ItemCard';
 import { DeviceModal } from './components/DeviceModal';
 import { ExportModal } from './components/ExportModal';
-import { ClipboardCheck, Sparkles, DownloadCloud, Check, Zap } from 'lucide-react';
+import { ClipboardCheck, Sparkles, DownloadCloud, Check, Zap, ShieldAlert, Lock } from 'lucide-react';
 import './styles/tokens.css';
 
 export const App: React.FC = () => {
@@ -259,6 +259,48 @@ export const App: React.FC = () => {
             }}
           >
             Install
+          </button>
+        </div>
+      )}
+
+      {/* Insecure HTTP Banner: Explains how to unlock Clipboard API */}
+      {typeof window !== 'undefined' && !window.isSecureContext && window.location.protocol === 'http:' && (
+        <div style={{
+          backgroundColor: 'var(--color-warning-bg)',
+          borderBottom: '1px solid var(--color-warning)',
+          padding: '12px 24px',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'space-between',
+          gap: '12px',
+          flexWrap: 'wrap',
+          fontSize: '13px'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--color-warning)' }}>
+            <ShieldAlert size={18} />
+            <div>
+              <span style={{ fontWeight: 700 }}>Insecure HTTP Detected: </span>
+              <span>Mobile browsers disable clipboard access over HTTP. Switch to HTTPS to enable 1-Click Sync.</span>
+            </div>
+          </div>
+          <button
+            onClick={() => {
+              window.location.protocol = 'https:';
+            }}
+            style={{
+              display: 'flex',
+              alignItems: 'center',
+              gap: '6px',
+              padding: '6px 14px',
+              backgroundColor: 'var(--color-warning)',
+              color: '#FFF',
+              borderRadius: 'var(--radius-sm)',
+              fontWeight: 600,
+              fontSize: '12px'
+            }}
+          >
+            <Lock size={13} />
+            <span>Switch to HTTPS (Unlocks Sync)</span>
           </button>
         </div>
       )}

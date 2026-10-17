@@ -35,9 +35,29 @@ export const ItemCard: React.FC<ItemCardProps> = ({
           // Fallback to text copy
         }
       }
-      await navigator.clipboard.writeText(item.plainText);
-      setCopied(true);
-      setTimeout(() => setCopied(false), 2000);
+      if (typeof navigator !== 'undefined' && navigator.clipboard && navigator.clipboard.writeText) {
+        await navigator.clipboard.writeText(item.plainText);
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+        return;
+      }
+
+      // Fallback for insecure contexts (HTTP)
+      const ta = document.createElement('textarea');
+      ta.value = item.plainText;
+      ta.style.position = 'fixed';
+      ta.style.left = '-9999px';
+      ta.style.top = '0';
+      document.body.appendChild(ta);
+      ta.focus();
+      ta.select();
+      try {
+        document.execCommand('copy');
+        setCopied(true);
+        setTimeout(() => setCopied(false), 2000);
+      } finally {
+        document.body.removeChild(ta);
+      }
     } catch {
       // Fallback
     }
