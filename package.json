@@ -1,0 +1,24 @@
+{
+  "name": "clipvault",
+  "version": "1.0.0",
+  "description": "Universal Clipboard Capture, Permanent History & Cross-Device Sync Platform",
+  "private": true,
+  "type": "module",
+  "workspaces": [
+    "packages/*"
+  ],
+  "engines": {
+    "node": ">=20.0.0"
+  },
+  "scripts": {
+    "test": "node --import tsx tests/run-all.ts",
+    "test:unit": "node --import tsx tests/unit/domain-models.test.ts",
+    "typecheck": "tsc --noEmit -p tsconfig.json",
+    "build": "npm run build --workspaces --if-present"
+  },
+  "devDependencies": {
+    "@types/node": "^22.13.5",
+    "tsx": "^4.19.3",
+    "typescript": "^5.7.3"
+  }
+}
