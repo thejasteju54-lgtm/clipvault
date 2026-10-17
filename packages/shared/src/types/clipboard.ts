@@ -40,6 +40,7 @@ export interface ClipboardItem {
   sourceApp?: string | null; // App package or binary name (privacy-filtered)
   isPinned: boolean;
   isFavorite: boolean;
+  isOpened?: boolean; // For links: tracks whether link was opened
   tags: string[];
   capturedAt: string; // ISO 8601 UTC timestamp
   createdAt: string; // ISO 8601 UTC timestamp
@@ -60,6 +61,7 @@ export interface CreateClipboardItemInput {
   sourceApp?: string | null;
   isPinned?: boolean;
   isFavorite?: boolean;
+  isOpened?: boolean;
   tags?: string[];
   deviceId?: string;
   deviceName?: string;

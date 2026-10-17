@@ -118,6 +118,7 @@ export const vaultStorage = {
       sourceApp: input.sourceApp || 'WebBrowser',
       isPinned: !!input.isPinned,
       isFavorite: !!input.isFavorite,
+      isOpened: !!input.isOpened,
       tags: input.tags || [],
       capturedAt: now,
       createdAt: now,
@@ -129,6 +130,16 @@ export const vaultStorage = {
     items.unshift(newItem);
     localStorage.setItem(STORAGE_KEY_ITEMS, JSON.stringify(items));
     return { item: newItem, isDuplicate: false };
+  },
+
+  toggleOpened(id: string, forceStatus?: boolean): boolean {
+    const items = this.getItems();
+    const item = items.find((i) => i.id === id);
+    if (!item) return false;
+    item.isOpened = forceStatus !== undefined ? forceStatus : !item.isOpened;
+    item.updatedAt = new Date().toISOString();
+    localStorage.setItem(STORAGE_KEY_ITEMS, JSON.stringify(items));
+    return item.isOpened;
   },
 
   isAutoSyncEnabled(): boolean {

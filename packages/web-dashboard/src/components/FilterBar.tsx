@@ -1,5 +1,5 @@
 import React from 'react';
-import { Search, X, Pin, Star, Link, Code, FileText, Image, LayoutGrid } from 'lucide-react';
+import { Search, X, Pin, Star, Link, Code, FileText, LayoutGrid } from 'lucide-react';
 
 interface FilterBarProps {
   searchQuery: string;
@@ -15,23 +15,22 @@ export const FilterBar: React.FC<FilterBarProps> = ({
   onFilterChange
 }) => {
   const filterTabs = [
-    { id: 'All', label: 'All Clips', icon: LayoutGrid },
-    { id: 'Pinned', label: 'Pinned', icon: Pin },
-    { id: 'Favorites', label: 'Favorites', icon: Star },
-    { id: 'URLs', label: 'URLs', icon: Link },
+    { id: 'All', label: 'All', icon: LayoutGrid },
+    { id: 'URLs', label: 'Links', icon: Link },
+    { id: 'Text', label: 'Notes', icon: FileText },
     { id: 'Code', label: 'Code', icon: Code },
-    { id: 'Text', label: 'Text', icon: FileText },
-    { id: 'Images', label: 'Images', icon: Image }
+    { id: 'Pinned', label: 'Pinned', icon: Pin },
+    { id: 'Favorites', label: 'Starred', icon: Star }
   ];
 
   return (
     <div style={{
       maxWidth: '840px',
       margin: '0 auto',
-      padding: '16px 24px',
+      padding: '10px 16px 8px 16px',
       display: 'flex',
       flexDirection: 'column',
-      gap: '12px'
+      gap: '8px'
     }}>
       {/* Search Input */}
       <div style={{
@@ -40,10 +39,10 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         alignItems: 'center'
       }}>
         <Search
-          size={16}
+          size={14}
           style={{
             position: 'absolute',
-            left: '14px',
+            left: '12px',
             color: 'var(--text-dim)'
           }}
         />
@@ -51,15 +50,15 @@ export const FilterBar: React.FC<FilterBarProps> = ({
           type="text"
           value={searchQuery}
           onChange={(e) => onSearchChange(e.target.value)}
-          placeholder="Search by text, URL, tag, or content snippet..."
+          placeholder="Search clips..."
           style={{
             width: '100%',
-            padding: '10px 38px 10px 40px',
+            padding: '8px 32px 8px 34px',
             backgroundColor: 'var(--bg-surface)',
             color: 'var(--text-main)',
             border: '1px solid var(--border-subtle)',
             borderRadius: 'var(--radius-sm)',
-            fontSize: '13px',
+            fontSize: '12.5px',
             outline: 'none',
             transition: 'var(--transition-fast)'
           }}
@@ -69,11 +68,13 @@ export const FilterBar: React.FC<FilterBarProps> = ({
             onClick={() => onSearchChange('')}
             style={{
               position: 'absolute',
-              right: '12px',
-              color: 'var(--text-dim)'
+              right: '10px',
+              color: 'var(--text-dim)',
+              display: 'flex',
+              alignItems: 'center'
             }}
           >
-            <X size={15} />
+            <X size={14} />
           </button>
         )}
       </div>
@@ -83,7 +84,8 @@ export const FilterBar: React.FC<FilterBarProps> = ({
         display: 'flex',
         gap: '6px',
         overflowX: 'auto',
-        paddingBottom: '4px'
+        paddingBottom: '2px',
+        scrollbarWidth: 'none'
       }}>
         {filterTabs.map((tab) => {
           const IconComp = tab.icon;
@@ -93,11 +95,11 @@ export const FilterBar: React.FC<FilterBarProps> = ({
               key={tab.id}
               onClick={() => onFilterChange(tab.id)}
               style={{
-                display: 'flex',
+                display: 'inline-flex',
                 alignItems: 'center',
-                gap: '6px',
-                padding: '6px 12px',
-                fontSize: '12px',
+                gap: '5px',
+                padding: '4px 10px',
+                fontSize: '11.5px',
                 fontWeight: isSelected ? 600 : 500,
                 borderRadius: 'var(--radius-full)',
                 backgroundColor: isSelected ? 'var(--color-primary-light)' : 'var(--bg-surface)',
@@ -107,7 +109,7 @@ export const FilterBar: React.FC<FilterBarProps> = ({
                 transition: 'var(--transition-fast)'
               }}
             >
-              <IconComp size={13} />
+              <IconComp size={12} />
               <span>{tab.label}</span>
             </button>
           );

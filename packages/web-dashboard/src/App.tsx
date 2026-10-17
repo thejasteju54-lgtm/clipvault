@@ -197,6 +197,11 @@ export const App: React.FC = () => {
     }
   };
 
+  const handleToggleOpened = (id: string) => {
+    vaultStorage.toggleOpened(id);
+    refreshVault();
+  };
+
   // Filter items
   const filteredItems = items.filter((item) => {
     // Search query match
@@ -215,13 +220,11 @@ export const App: React.FC = () => {
       case 'Favorites':
         return item.isFavorite;
       case 'URLs':
-        return item.contentType === 'url';
+        return item.contentType === 'url' || Boolean(item.detectedUrl);
       case 'Code':
         return item.contentType === 'code';
       case 'Text':
-        return item.contentType === 'text';
-      case 'Images':
-        return item.contentType === 'image';
+        return item.contentType === 'text' || item.contentType === 'rich_text';
       default:
         return true;
     }
@@ -335,20 +338,26 @@ export const App: React.FC = () => {
         onFilterChange={setSelectedFilter}
       />
 
-      {/* View Mode & Segment Switcher Bar */}
+      {/* View Mode Switcher */}
       <div style={{
         maxWidth: '840px',
         width: '100%',
         margin: '0 auto',
-        padding: '0 24px 12px 24px',
+        padding: '0 16px 10px 16px',
         display: 'flex',
         alignItems: 'center',
         justifyContent: 'space-between',
-        flexWrap: 'wrap',
         gap: '8px'
       }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
-          <span style={{ fontSize: '12px', fontWeight: 600, color: 'var(--text-muted)' }}>View:</span>
+        <div style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          gap: '4px',
+          padding: '3px',
+          backgroundColor: 'var(--bg-surface)',
+          borderRadius: 'var(--radius-full)',
+          border: '1px solid var(--border-subtle)'
+        }}>
           <button
             type="button"
             onClick={() => setViewMode('segmented')}
@@ -356,18 +365,19 @@ export const App: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-sm)',
+              padding: '6px 14px',
+              borderRadius: 'var(--radius-full)',
               fontSize: '12px',
-              fontWeight: viewMode === 'segmented' ? 700 : 500,
-              backgroundColor: viewMode === 'segmented' ? 'var(--color-primary-light)' : 'var(--bg-surface)',
+              fontWeight: viewMode === 'segmented' ? 600 : 500,
+              backgroundColor: viewMode === 'segmented' ? 'var(--color-primary-light)' : 'transparent',
               color: viewMode === 'segmented' ? 'var(--color-primary)' : 'var(--text-muted)',
-              border: `1px solid ${viewMode === 'segmented' ? 'var(--color-primary-border)' : 'var(--border-subtle)'}`,
-              transition: 'var(--transition-fast)'
+              border: viewMode === 'segmented' ? '1px solid var(--color-primary-border)' : '1px solid transparent',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
             }}
           >
-            <LayoutGrid size={14} />
-            <span>Segmented Board (Auto-Categorized)</span>
+            <LayoutGrid size={13} />
+            <span>Segments</span>
           </button>
 
           <button
@@ -377,23 +387,24 @@ export const App: React.FC = () => {
               display: 'flex',
               alignItems: 'center',
               gap: '6px',
-              padding: '6px 12px',
-              borderRadius: 'var(--radius-sm)',
+              padding: '6px 14px',
+              borderRadius: 'var(--radius-full)',
               fontSize: '12px',
-              fontWeight: viewMode === 'feed' ? 700 : 500,
-              backgroundColor: viewMode === 'feed' ? 'var(--color-primary-light)' : 'var(--bg-surface)',
+              fontWeight: viewMode === 'feed' ? 600 : 500,
+              backgroundColor: viewMode === 'feed' ? 'var(--color-primary-light)' : 'transparent',
               color: viewMode === 'feed' ? 'var(--color-primary)' : 'var(--text-muted)',
-              border: `1px solid ${viewMode === 'feed' ? 'var(--color-primary-border)' : 'var(--border-subtle)'}`,
-              transition: 'var(--transition-fast)'
+              border: viewMode === 'feed' ? '1px solid var(--color-primary-border)' : '1px solid transparent',
+              cursor: 'pointer',
+              transition: 'all 0.15s ease'
             }}
           >
-            <List size={14} />
-            <span>Unified Feed</span>
+            <List size={13} />
+            <span>All Feed</span>
           </button>
         </div>
 
-        <div style={{ fontSize: '12px', color: 'var(--text-dim)' }}>
-          {items.length} clips organized
+        <div style={{ fontSize: '11px', color: 'var(--text-dim)', fontWeight: 500 }}>
+          {filteredItems.length} {filteredItems.length === 1 ? 'clip' : 'clips'}
         </div>
       </div>
 
@@ -402,37 +413,37 @@ export const App: React.FC = () => {
         maxWidth: '840px',
         width: '100%',
         margin: '0 auto',
-        padding: '0 24px 80px 24px'
+        padding: '0 16px 110px 16px'
       }}>
         {filteredItems.length === 0 ? (
           <div style={{
             textAlign: 'center',
-            padding: '64px 20px',
+            padding: '48px 20px',
             backgroundColor: 'var(--bg-surface)',
             borderRadius: 'var(--radius-lg)',
             border: '1px solid var(--border-subtle)',
-            marginTop: '16px'
+            marginTop: '8px'
           }}>
             <div style={{
-              width: '48px',
-              height: '48px',
+              width: '42px',
+              height: '42px',
               borderRadius: 'var(--radius-full)',
               backgroundColor: 'var(--bg-canvas)',
               display: 'flex',
               alignItems: 'center',
               justifyContent: 'center',
-              margin: '0 auto 16px auto',
+              margin: '0 auto 12px auto',
               color: 'var(--text-dim)'
             }}>
-              <ClipboardCheck size={24} />
+              <ClipboardCheck size={20} />
             </div>
-            <h2 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '6px' }}>
-              {searchQuery ? 'No matching clipboard items found' : 'Your vault is empty'}
+            <h2 style={{ fontSize: '15px', fontWeight: 600, marginBottom: '6px' }}>
+              {searchQuery ? 'No matching clips found' : 'Your vault is empty'}
             </h2>
-            <p style={{ fontSize: '13px', color: 'var(--text-muted)', maxWidth: '420px', margin: '0 auto 16px auto' }}>
+            <p style={{ fontSize: '12px', color: 'var(--text-muted)', maxWidth: '380px', margin: '0 auto 16px auto', lineHeight: 1.5 }}>
               {searchQuery
-                ? 'Try adjusting your search terms or clearing the active filter.'
-                : 'Copy any text, link, or screenshot in any app on your phone, then return here. ClipVault auto-syncs it into its own segment!'}
+                ? 'Try adjusting your search query or switching to another filter.'
+                : 'Copy any link or note on your phone, then return here. ClipVault auto-sorts it into clean segments!'}
             </p>
             <button
               onClick={handleManualSync}
@@ -440,17 +451,18 @@ export const App: React.FC = () => {
               style={{
                 display: 'inline-flex',
                 alignItems: 'center',
-                gap: '8px',
-                padding: '10px 18px',
+                gap: '6px',
+                padding: '8px 16px',
                 backgroundColor: 'var(--color-primary)',
                 color: '#FFF',
                 borderRadius: 'var(--radius-md)',
                 fontWeight: 600,
-                fontSize: '13px'
+                fontSize: '12px',
+                cursor: 'pointer'
               }}
             >
-              <Sparkles size={15} />
-              <span>{isSyncing ? 'Syncing...' : 'Sync Clipboard Now'}</span>
+              <Sparkles size={14} />
+              <span>{isSyncing ? 'Syncing...' : 'Sync Clipboard'}</span>
             </button>
           </div>
         ) : viewMode === 'segmented' && selectedFilter === 'All' && !searchQuery ? (
@@ -459,11 +471,10 @@ export const App: React.FC = () => {
             onTogglePin={handleTogglePin}
             onToggleFavorite={handleToggleFavorite}
             onDelete={handleDelete}
-            onManualSync={handleManualSync}
-            isSyncing={isSyncing}
+            onToggleOpened={handleToggleOpened}
           />
         ) : (
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', marginTop: '16px' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', marginTop: '8px' }}>
             {filteredItems.map((item) => (
               <ItemCard
                 key={item.id}
@@ -471,39 +482,41 @@ export const App: React.FC = () => {
                 onTogglePin={handleTogglePin}
                 onToggleFavorite={handleToggleFavorite}
                 onDelete={handleDelete}
+                onToggleOpened={handleToggleOpened}
               />
             ))}
           </div>
         )}
       </main>
 
-      {/* Floating 1-Tap Sync Button (Never focuses input, zero keyboard popup!) */}
+      {/* Sleek Floating Sync Button (Mobile thumb-friendly) */}
       <button
         onClick={handleManualSync}
         disabled={isSyncing}
         style={{
           position: 'fixed',
-          bottom: '24px',
-          right: '24px',
+          bottom: '20px',
+          right: '16px',
           display: 'flex',
           alignItems: 'center',
-          gap: '8px',
-          padding: '14px 20px',
+          gap: '6px',
+          padding: '10px 18px',
           backgroundColor: 'var(--color-primary)',
           color: '#FFF',
           borderRadius: 'var(--radius-full)',
-          boxShadow: 'var(--shadow-lg)',
+          boxShadow: '0 4px 14px rgba(79, 70, 229, 0.4)',
           fontWeight: 600,
-          fontSize: '14px',
+          fontSize: '13px',
           zIndex: 100,
-          transition: 'transform 0.15s ease, opacity 0.15s ease',
-          border: '1px solid rgba(255, 255, 255, 0.2)',
-          opacity: isSyncing ? 0.75 : 1
+          transition: 'all 0.15s ease',
+          border: '1px solid rgba(255, 255, 255, 0.15)',
+          opacity: isSyncing ? 0.75 : 1,
+          cursor: 'pointer'
         }}
-        title="Tap to sync all clipboard content (text, links, screenshots) immediately"
+        title="Tap to sync clipboard immediately"
       >
-        <Sparkles size={18} />
-        <span>{isSyncing ? 'Syncing...' : 'Sync Clipboard'}</span>
+        <Sparkles size={15} />
+        <span>{isSyncing ? 'Syncing...' : 'Sync'}</span>
       </button>
 
       {/* Feedback Toast */}

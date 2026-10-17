@@ -1,15 +1,14 @@
 import React, { useState } from 'react';
 import { ClipboardItem } from '@clipvault/shared';
 import { ItemCard } from './ItemCard';
-import { Image, Link, Code, FileText, ChevronDown, ChevronRight, Sparkles } from 'lucide-react';
+import { Link, Code, FileText, ChevronDown, ChevronRight, CheckCircle2, Circle } from 'lucide-react';
 
 interface SegmentedVaultProps {
   items: ClipboardItem[];
   onTogglePin: (id: string) => void;
   onToggleFavorite: (id: string) => void;
   onDelete: (id: string) => void;
-  onManualSync?: () => void;
-  isSyncing?: boolean;
+  onToggleOpened: (id: string) => void;
 }
 
 export const SegmentedVault: React.FC<SegmentedVaultProps> = ({
@@ -17,182 +16,216 @@ export const SegmentedVault: React.FC<SegmentedVaultProps> = ({
   onTogglePin,
   onToggleFavorite,
   onDelete,
-  onManualSync,
-  isSyncing
+  onToggleOpened
 }) => {
-  // Collapsible state for each segment
   const [collapsed, setCollapsed] = useState<Record<string, boolean>>({
-    image: false,
     url: false,
-    code: false,
-    text: false
+    text: false,
+    code: false
   });
+
+  const [linkSubFilter, setLinkSubFilter] = useState<'all' | 'unopened' | 'opened'>('all');
 
   const toggleSegment = (key: string) => {
     setCollapsed((prev) => ({ ...prev, [key]: !prev[key] }));
   };
 
-  const images = items.filter((i) => i.contentType === 'image');
-  const urls = items.filter((i) => i.contentType === 'url');
-  const code = items.filter((i) => i.contentType === 'code');
-  const text = items.filter((i) => i.contentType === 'text' || i.contentType === 'rich_text');
+  const allUrls = items.filter((i) => i.contentType === 'url' || !!i.detectedUrl);
+  const unopenedUrls = allUrls.filter((i) => !i.isOpened);
+  const openedUrls = allUrls.filter((i) => !!i.isOpened);
+
+  const filteredUrls = linkSubFilter === 'unopened'
+    ? unopenedUrls
+    : linkSubFilter === 'opened'
+      ? openedUrls
+      : allUrls;
+
+  const textItems = items.filter((i) => i.contentType === 'text' || i.contentType === 'rich_text');
+  const codeItems = items.filter((i) => i.contentType === 'code');
 
   const segments = [
-    {
-      key: 'image',
-      title: 'Screenshots & Images',
-      icon: Image,
-      badgeColor: '#E65100',
-      badgeBg: 'rgba(230, 81, 0, 0.12)',
-      items: images,
-      emptyHint: 'Screenshots and graphics you copy or import will automatically land here.'
-    },
     {
       key: 'url',
       title: 'Links & Web Resources',
       icon: Link,
-      badgeColor: '#1976D2',
-      badgeBg: 'rgba(25, 118, 210, 0.12)',
-      items: urls,
-      emptyHint: 'Copied web links, articles, and URLs will automatically land here.'
+      accentColor: 'var(--color-link-unopened)',
+      badgeBg: 'var(--color-link-unopened-bg)',
+      items: filteredUrls,
+      totalCount: allUrls.length,
+      isLinkSegment: true,
+      emptyHint: 'Copied web links and URLs will automatically land here.'
+    },
+    {
+      key: 'text',
+      title: 'Notes & Plain Text',
+      icon: FileText,
+      accentColor: 'var(--color-primary)',
+      badgeBg: 'var(--color-primary-light)',
+      items: textItems,
+      totalCount: textItems.length,
+      isLinkSegment: false,
+      emptyHint: 'Copied text, messages, and notes will automatically land here.'
     },
     {
       key: 'code',
       title: 'Code & Snippets',
       icon: Code,
-      badgeColor: '#7B1FA2',
-      badgeBg: 'rgba(123, 31, 162, 0.12)',
-      items: code,
-      emptyHint: 'Programming code snippets, JSON, and commands will automatically land here.'
-    },
-    {
-      key: 'text',
-      title: 'Plain Text & Notes',
-      icon: FileText,
-      badgeColor: 'var(--color-primary)',
-      badgeBg: 'var(--color-primary-light)',
-      items: text,
-      emptyHint: 'General notes, copied messages, and text will automatically land here.'
+      accentColor: '#A855F7',
+      badgeBg: 'rgba(168, 85, 247, 0.12)',
+      items: codeItems,
+      totalCount: codeItems.length,
+      isLinkSegment: false,
+      emptyHint: 'Programming code, JSON, and commands will automatically land here.'
     }
   ];
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '24px' }}>
+    <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
       {segments.map((seg) => {
         const IconComp = seg.icon;
         const isCollapsed = collapsed[seg.key];
-        const count = seg.items.length;
 
         return (
           <section
             key={seg.key}
             style={{
               backgroundColor: 'var(--bg-surface)',
-              borderRadius: 'var(--radius-lg)',
+              borderRadius: 'var(--radius-md)',
               border: '1px solid var(--border-subtle)',
-              overflow: 'hidden',
-              boxShadow: 'var(--shadow-sm)'
+              overflow: 'hidden'
             }}
           >
-            {/* Segment Header Bar */}
+            {/* Minimalist Segment Header */}
             <div
               onClick={() => toggleSegment(seg.key)}
               style={{
                 display: 'flex',
                 alignItems: 'center',
                 justifyContent: 'space-between',
-                padding: '16px 20px',
+                padding: '14px 16px',
                 cursor: 'pointer',
-                backgroundColor: 'var(--bg-surface-elevated)',
+                backgroundColor: 'var(--bg-surface)',
                 borderBottom: isCollapsed ? 'none' : '1px solid var(--border-subtle)',
                 userSelect: 'none'
               }}
             >
-              <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
-                <div style={{
-                  width: '32px',
-                  height: '32px',
-                  borderRadius: 'var(--radius-sm)',
-                  backgroundColor: seg.badgeBg,
-                  color: seg.badgeColor,
-                  display: 'flex',
-                  alignItems: 'center',
-                  justifyContent: 'center'
-                }}>
-                  <IconComp size={18} />
-                </div>
-                <h3 style={{ fontSize: '15px', fontWeight: 700, letterSpacing: '-0.01em' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <IconComp size={16} color={seg.accentColor} />
+                <h3 style={{ fontSize: '14px', fontWeight: 600 }}>
                   {seg.title}
                 </h3>
                 <span style={{
                   fontSize: '11px',
-                  fontWeight: 700,
-                  padding: '2px 8px',
+                  fontWeight: 600,
+                  padding: '1px 7px',
                   borderRadius: 'var(--radius-full)',
-                  backgroundColor: count > 0 ? seg.badgeBg : 'var(--bg-canvas)',
-                  color: count > 0 ? seg.badgeColor : 'var(--text-dim)',
-                  border: `1px solid ${count > 0 ? 'rgba(255, 255, 255, 0.05)' : 'var(--border-subtle)'}`
+                  backgroundColor: seg.totalCount > 0 ? seg.badgeBg : 'var(--bg-canvas)',
+                  color: seg.totalCount > 0 ? seg.accentColor : 'var(--text-dim)'
                 }}>
-                  {count} {count === 1 ? 'item' : 'items'}
+                  {seg.totalCount}
                 </span>
               </div>
 
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', color: 'var(--text-dim)' }}>
-                {isCollapsed ? <ChevronRight size={18} /> : <ChevronDown size={18} />}
+              <div style={{ color: 'var(--text-dim)' }}>
+                {isCollapsed ? <ChevronRight size={16} /> : <ChevronDown size={16} />}
               </div>
             </div>
 
-            {/* Segment Content */}
+            {/* If Link Segment, show Opened vs Unopened Sub-Filter Bar */}
+            {!isCollapsed && seg.isLinkSegment && allUrls.length > 0 && (
+              <div style={{
+                display: 'flex',
+                alignItems: 'center',
+                gap: '6px',
+                padding: '8px 16px',
+                backgroundColor: 'var(--bg-canvas)',
+                borderBottom: '1px solid var(--border-subtle)',
+                overflowX: 'auto'
+              }}>
+                <button
+                  type="button"
+                  onClick={() => setLinkSubFilter('all')}
+                  style={{
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: linkSubFilter === 'all' ? 700 : 500,
+                    borderRadius: 'var(--radius-xs)',
+                    backgroundColor: linkSubFilter === 'all' ? 'var(--bg-surface-elevated)' : 'transparent',
+                    color: linkSubFilter === 'all' ? 'var(--text-main)' : 'var(--text-muted)',
+                    border: linkSubFilter === 'all' ? '1px solid var(--border-subtle)' : '1px solid transparent'
+                  }}
+                >
+                  All ({allUrls.length})
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setLinkSubFilter('unopened')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: linkSubFilter === 'unopened' ? 700 : 500,
+                    borderRadius: 'var(--radius-xs)',
+                    backgroundColor: linkSubFilter === 'unopened' ? 'var(--color-link-unopened-bg)' : 'transparent',
+                    color: linkSubFilter === 'unopened' ? 'var(--color-link-unopened)' : 'var(--text-muted)',
+                    border: linkSubFilter === 'unopened' ? '1px solid var(--color-link-unopened-border)' : '1px solid transparent'
+                  }}
+                >
+                  <Circle size={7} fill="currentColor" />
+                  <span>Unopened ({unopenedUrls.length})</span>
+                </button>
+
+                <button
+                  type="button"
+                  onClick={() => setLinkSubFilter('opened')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '3px 8px',
+                    fontSize: '11px',
+                    fontWeight: linkSubFilter === 'opened' ? 700 : 500,
+                    borderRadius: 'var(--radius-xs)',
+                    backgroundColor: linkSubFilter === 'opened' ? 'var(--color-link-opened-bg)' : 'transparent',
+                    color: linkSubFilter === 'opened' ? 'var(--color-link-opened)' : 'var(--text-muted)',
+                    border: linkSubFilter === 'opened' ? '1px solid var(--color-link-opened-border)' : '1px solid transparent'
+                  }}
+                >
+                  <CheckCircle2 size={10} />
+                  <span>Opened ({openedUrls.length})</span>
+                </button>
+              </div>
+            )}
+
+            {/* Segment Items List */}
             {!isCollapsed && (
-              <div style={{ padding: '16px', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                {count === 0 ? (
+              <div style={{ padding: '12px 14px', display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                {seg.items.length === 0 ? (
                   <div style={{
-                    padding: '28px 16px',
+                    padding: '20px 14px',
                     textAlign: 'center',
                     backgroundColor: 'var(--bg-canvas)',
                     borderRadius: 'var(--radius-sm)',
                     border: '1px dashed var(--border-subtle)'
                   }}>
-                    <p style={{ fontSize: '13px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+                    <p style={{ fontSize: '12px', color: 'var(--text-muted)' }}>
                       {seg.emptyHint}
                     </p>
-                    {onManualSync && (
-                      <button
-                        type="button"
-                        onClick={(e) => {
-                          e.stopPropagation();
-                          onManualSync();
-                        }}
-                        disabled={isSyncing}
-                        style={{
-                          display: 'inline-flex',
-                          alignItems: 'center',
-                          gap: '6px',
-                          fontSize: '12px',
-                          fontWeight: 600,
-                          color: seg.badgeColor,
-                          padding: '6px 12px',
-                          borderRadius: 'var(--radius-sm)',
-                          backgroundColor: seg.badgeBg
-                        }}
-                      >
-                        <Sparkles size={13} />
-                        <span>Auto-Fetch Now</span>
-                      </button>
-                    )}
                   </div>
                 ) : (
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                    {seg.items.map((item) => (
-                      <ItemCard
-                        key={item.id}
-                        item={item}
-                        onTogglePin={onTogglePin}
-                        onToggleFavorite={onToggleFavorite}
-                        onDelete={onDelete}
-                      />
-                    ))}
-                  </div>
+                  seg.items.map((item) => (
+                    <ItemCard
+                      key={item.id}
+                      item={item}
+                      onTogglePin={onTogglePin}
+                      onToggleFavorite={onToggleFavorite}
+                      onDelete={onDelete}
+                      onToggleOpened={onToggleOpened}
+                    />
+                  ))
                 )}
               </div>
             )}
