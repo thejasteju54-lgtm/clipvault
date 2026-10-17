@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { ClipboardItem } from '@clipvault/shared';
+import type { ClipboardItem } from '@clipvault/shared';
 import { Copy, Check, Pin, Star, Trash2, ExternalLink, Smartphone, Monitor, Globe } from 'lucide-react';
 
 interface ItemCardProps {
@@ -19,6 +19,22 @@ export const ItemCard: React.FC<ItemCardProps> = ({
 
   const handleCopy = async () => {
     try {
+      if (item.contentType === 'image' && item.attachmentUrl) {
+        try {
+          const res = await fetch(item.attachmentUrl);
+          const blob = await res.blob();
+          if (typeof window !== 'undefined' && 'ClipboardItem' in window) {
+            await navigator.clipboard.write([
+              new (window as any).ClipboardItem({ [blob.type]: blob })
+            ]);
+            setCopied(true);
+            setTimeout(() => setCopied(false), 2000);
+            return;
+          }
+        } catch {
+          // Fallback to text copy
+        }
+      }
       await navigator.clipboard.writeText(item.plainText);
       setCopied(true);
       setTimeout(() => setCopied(false), 2000);
@@ -156,7 +172,23 @@ export const ItemCard: React.FC<ItemCardProps> = ({
       </div>
 
       {/* Content Rendering */}
-      {item.contentType === 'code' ? (
+      {item.contentType === 'image' && item.attachmentUrl ? (
+        <div style={{
+          borderRadius: 'var(--radius-sm)',
+          overflow: 'hidden',
+          border: '1px solid var(--border-subtle)',
+          maxHeight: '280px',
+          display: 'flex',
+          justifyContent: 'center',
+          backgroundColor: '#000'
+        }}>
+          <img
+            src={item.attachmentUrl}
+            alt="Clipboard screenshot capture"
+            style={{ maxWidth: '100%', maxHeight: '280px', objectFit: 'contain' }}
+          />
+        </div>
+      ) : item.contentType === 'code' ? (
         <pre style={{
           fontFamily: 'var(--font-mono)',
           fontSize: '12px',

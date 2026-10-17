@@ -1,5 +1,5 @@
 import React from 'react';
-import { RegisteredDevice } from '@clipvault/shared';
+import type { RegisteredDevice } from '@clipvault/shared';
 import { X, Smartphone, Monitor, Globe, ShieldAlert, CheckCircle2 } from 'lucide-react';
 
 interface DeviceModalProps {

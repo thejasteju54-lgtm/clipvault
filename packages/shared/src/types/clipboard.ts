@@ -56,6 +56,7 @@ export interface CreateClipboardItemInput {
   htmlContent?: string | null;
   detectedUrl?: string | null;
   attachmentPath?: string | null;
+  attachmentUrl?: string | null;
   sourceApp?: string | null;
   isPinned?: boolean;
   isFavorite?: boolean;

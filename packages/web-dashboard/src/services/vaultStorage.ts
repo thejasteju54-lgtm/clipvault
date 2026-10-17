@@ -1,4 +1,5 @@
-import { ClipboardItem, CreateClipboardItemInput, RegisteredDevice, computeContentHash, extractAndSanitizeUrl, detectCodeSnippet } from '@clipvault/shared';
+import type { ClipboardItem, CreateClipboardItemInput, RegisteredDevice } from '@clipvault/shared';
+import { computeContentHash, extractAndSanitizeUrl, detectCodeSnippet } from '@clipvault/shared';
 
 const STORAGE_KEY_ITEMS = 'clipvault_local_items';
 const STORAGE_KEY_DEVICES = 'clipvault_registered_devices';
@@ -59,9 +60,9 @@ export const vaultStorage = {
     const items = this.getItems();
     const now = new Date().toISOString();
 
-    const detectedUrl = input.detectedUrl || extractAndSanitizeUrl(input.plainText);
+    const detectedUrl = input.detectedUrl || (input.plainText ? extractAndSanitizeUrl(input.plainText) : null);
     let contentType = input.contentType || 'text';
-    if (contentType === 'text') {
+    if (contentType === 'text' && input.plainText) {
       let isPureUrl = false;
       try {
         const u = new URL(input.plainText.trim());
@@ -76,7 +77,12 @@ export const vaultStorage = {
       }
     }
 
-    const contentHash = computeContentHash(input.plainText, contentType);
+    // Include attachment url length and slice in content hash if image
+    const rawContentForHash = input.attachmentUrl
+      ? `${contentType}:${input.plainText || 'screenshot'}:${input.attachmentUrl.length}:${input.attachmentUrl.slice(0, 200)}`
+      : (input.plainText || '');
+
+    const contentHash = computeContentHash(rawContentForHash, contentType);
 
     // Deduplication check
     const existingIndex = items.findIndex((i) => i.contentHash === contentHash);
@@ -93,6 +99,10 @@ export const vaultStorage = {
       return { item: updated, isDuplicate: true };
     }
 
+    const calculatedSize = input.attachmentUrl
+      ? Math.round(input.attachmentUrl.length * 0.75)
+      : new Blob([input.plainText || '']).size;
+
     const newItem: ClipboardItem = {
       id: crypto.randomUUID ? crypto.randomUUID() : 'item-' + Date.now(),
       userId: '00000000-0000-0000-0000-000000000000',
@@ -100,14 +110,14 @@ export const vaultStorage = {
       deviceName: input.deviceName || 'Web Dashboard',
       deviceSequence: items.length + 1,
       contentType,
-      originalMimeTypes: input.originalMimeTypes || ['text/plain'],
-      plainText: input.plainText,
+      originalMimeTypes: input.originalMimeTypes || (contentType === 'image' ? ['image/png'] : ['text/plain']),
+      plainText: input.plainText || (contentType === 'image' ? 'Screenshot Image' : ''),
       detectedUrl,
       htmlContent: input.htmlContent || null,
       contentHash,
-      contentSizeBytes: new Blob([input.plainText]).size,
+      contentSizeBytes: calculatedSize,
       attachmentPath: null,
-      attachmentUrl: null,
+      attachmentUrl: input.attachmentUrl || null,
       sourceApp: input.sourceApp || 'WebBrowser',
       isPinned: !!input.isPinned,
       isFavorite: !!input.isFavorite,
@@ -122,6 +132,23 @@ export const vaultStorage = {
     items.unshift(newItem);
     localStorage.setItem(STORAGE_KEY_ITEMS, JSON.stringify(items));
     return { item: newItem, isDuplicate: false };
+  },
+
+  isAutoSyncEnabled(): boolean {
+    const val = localStorage.getItem('clipvault_auto_sync_enabled');
+    return val === null ? true : val === 'true'; // Default ON for seamless mobile sync
+  },
+
+  setAutoSyncEnabled(enabled: boolean): void {
+    localStorage.setItem('clipvault_auto_sync_enabled', enabled ? 'true' : 'false');
+  },
+
+  getLastSyncedHash(): string | null {
+    return localStorage.getItem('clipvault_last_synced_hash');
+  },
+
+  setLastSyncedHash(hash: string): void {
+    localStorage.setItem('clipvault_last_synced_hash', hash);
   },
 
   togglePin(id: string): boolean {
