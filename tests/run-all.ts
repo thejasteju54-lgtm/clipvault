@@ -11,12 +11,13 @@ async function runAllTests() {
 
   const files = [
     path.join(__dirname, 'unit', 'domain-models.test.ts'),
-    path.join(__dirname, 'unit', 'security-pii.test.ts')
+    path.join(__dirname, 'unit', 'security-pii.test.ts'),
+    path.join(__dirname, 'integration', 'vault-db.test.ts')
   ];
 
   const stream = run({
     files,
-    concurrency: true
+    concurrency: false // Sequential to isolate file locks
   });
 
   stream.compose(new spec()).pipe(process.stdout);
